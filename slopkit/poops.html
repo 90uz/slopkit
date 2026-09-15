@@ -348,7 +348,7 @@
 </head>
 <body class="quiet">
 <div id="slopkitHeader">
-  <h1>PS5 SlopKit Jailbreak (9.00-12.00)</h1>
+  <h1>PS5 SlopKit Jailbreak (9.00-13.00)</h1>
   <p>Current firmware: <b id="currentFirmware">detecting...</b></p>
 </div>
 <div id="main-content">
@@ -611,6 +611,10 @@ const STAGE5_REQUEST_ERROR = (() => {
     return STAGE5_FIRMWARES.indexOf(window.fw_str) >= 0
         ? "" : "unsupported-stage5-firmware";
 })();
+const STAGE5_REQUEST_ERROR_TEXT = STAGE5_REQUEST_ERROR === "unsupported-stage5-firmware"
+    && window.fw_str === "13.00"
+    ? "unsupported-stage5-firmware (13.00 currently stops before payload Stage 5)"
+    : STAGE5_REQUEST_ERROR;
 
 const PRODUCTION_REQUEST_ERROR = (() => {
     if (!Q.has("production") && !Q.has("auto") && !Q.has("next")) return "";
@@ -2450,7 +2454,7 @@ function lastRunText() {
 
     if (STAGE5_REQUEST_ERROR) {
         renderNav("", false);
-        stage("Stage 5 request refused: " + STAGE5_REQUEST_ERROR, "bad");
+        stage("Stage 5 request refused: " + STAGE5_REQUEST_ERROR_TEXT, "bad");
         summaryEl.textContent = "NOTHING was cleared or executed.";
         flushMark("POOPS-STAGE5-REFUSED", STAGE5_REQUEST_ERROR);
         sendRemoteEvents(false);
