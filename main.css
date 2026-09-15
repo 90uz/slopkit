@@ -97,6 +97,13 @@ a:focus-visible {
   white-space: normal;
   overflow: visible;
 }
+#fw-prereq-note,
+#fw-support-matrix {
+  max-width: 70%;
+  margin: .4rem auto 0;
+  white-space: normal;
+  overflow: visible;
+}
 .firmware-stage-note {
   color: #ebcb8b;
 }
