@@ -383,7 +383,7 @@
   </div>
   <div id="payloads-view" class="app-view">
     <div class="payloadHeader">
-      <h2>PS5 SlopKit Payloads (9.00-12.00)</h2>
+      <h2>PS5 SlopKit Payloads (9.00-13.00)</h2>
       <div class="payloadEyebrow" id="payloadNetworkStatus">Listening on console port 9021</div>
       <p id="payloadProgress">Select a payload to send it to the ELF loader.</p>
       <a class="homeLink" href="../index.html">Home</a>
@@ -500,7 +500,7 @@ const STAGE5_ONLY = "ps0_preflight,ps1_prepare,ps3_stage0,ps4_validate,"
     + "ps5_stage1,ps6_stage2,ps8_stage3,ps9_stage4,ps10_stage5";
 const STAGE5_FIRMWARES = Object.freeze([
     "9.00", "9.05", "9.20", "9.40", "9.60", "10.00", "10.01", "10.20",
-    "10.40", "10.60", "11.00", "11.20", "11.40", "11.60", "12.00"
+    "10.40", "10.60", "11.00", "11.20", "11.40", "11.60", "12.00", "13.00"
 ]);
 
 function storeGet(k) {
@@ -615,14 +615,11 @@ const STAGE5_REQUEST_ERROR = (() => {
     return STAGE5_FIRMWARES.indexOf(window.fw_str) >= 0
         ? "" : "unsupported-stage5-firmware";
 })();
-const STAGE5_REQUEST_ERROR_TEXT = STAGE5_REQUEST_ERROR === "unsupported-stage5-firmware"
-    && window.fw_str === "13.00"
-    ? "unsupported-stage5-firmware (13.00 currently stops before payload Stage 5)"
-    : STAGE5_REQUEST_ERROR;
+const STAGE5_REQUEST_ERROR_TEXT = STAGE5_REQUEST_ERROR;
 const STAGE5_COMPAT_CHECKS = Object.freeze([
     {
-        name: "fw13-excluded-from-stage5-allowlist",
-        ok: STAGE5_FIRMWARES.indexOf("13.00") < 0
+        name: "fw13-included-in-stage5-allowlist",
+        ok: STAGE5_FIRMWARES.indexOf("13.00") >= 0
     },
     {
         name: "reuse-counts-as-stage5-intent",
