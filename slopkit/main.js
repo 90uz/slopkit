@@ -11,10 +11,9 @@ const fw_match = /PlayStation 5\/(\d+\.\d+)/.exec(navigator.userAgent);
 window.fw_str = fw_match ? fw_match[1] : "";
 window.fw_float = parseFloat(window.fw_str);
 
-if (!supportedFirmwares.includes(fw_str)) {
-
-    alert(`Firmware ${fw_str} is unsupported.\n\nSupported: ${supportedFirmwares.join(", ")}`);
-    throw new Error("no offsets for fw " + fw_str);
+if (!supportedFirmwares.includes(window.fw_str)) {
+    alert(`Firmware ${window.fw_str} is unsupported.\n\nSupported: ${supportedFirmwares.join(", ")}`);
+    throw new Error("no offsets for fw " + window.fw_str);
 }
 
 function find_worker(p, libKernelBase) {
@@ -36,10 +35,6 @@ async function find_worker_return_slot(p, stack, libKernelBase) {
     const expected = libKernelBase.add32(OFFSET_lk_worker_wait_return);
     let lastCount = 0;
 
-    // The worker may answer immediately before returning to its idle wait.
-    // The exact saved PC is the firmware-specific fingerprint. Do not require
-    // the following qword to resemble an RSP: that adjacent slot is ABI/frame
-    // layout dependent and 10.60 legitimately does not satisfy that heuristic.
     for (let attempt = 0; attempt < 50; attempt++) {
         let hit = null;
         let count = 0;
@@ -78,9 +73,6 @@ async function prepare(p) {
 
     let textAreaVtable = p.read8(textAreaVtPtr);
 
-    // 9.00+ has no vtable rva; resolve from the host constructor instead.
-    // A candidate is accepted only if it lands page-aligned in the user-module
-    // band, so a wrong one is rejected rather than used.
     let libSceNKWebKitBase = null;
     if (window.fw_float >= 9.00
         && typeof OFFSET_wk_host_constructor_candidates !== "undefined"
@@ -114,7 +106,6 @@ async function prepare(p) {
     let libKernelBase = p.read8(libSceNKWebKitBase.add32(OFFSET_wk___stack_chk_guard_import));
     libKernelBase.sub32inplace(OFFSET_lk___stack_chk_guard);
 
-    // once per run, before any racer exists
     jbmark("MODULE-BASES", "wk=0x" + libSceNKWebKitBase.toString()
         + "-lk=0x" + libKernelBase.toString()
         + "-lc=0x" + libSceLibcInternalBase.toString());
@@ -242,7 +233,6 @@ async function prepare(p) {
     if (typeof OFFSET_lk_worker_wait_return !== "undefined") {
         return_address_ptr = await find_worker_return_slot(p, worker_stack, libKernelBase);
     } else {
-        // Backward-compatible path for original profiles without a saved-PC fingerprint.
         return_address_ptr = worker_stack.add32(OFFSET_WORKER_STACK_OFFSET);
     }
     let original_return_address = p.read8(return_address_ptr);
