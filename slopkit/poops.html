@@ -44,20 +44,28 @@
            margin-bottom: 12px; background: #1b2430; border-left: 8px solid #5e81ac; }
   #stage.ok  { background: #16281c; border-left-color: #47c76a; color: #b8f0c6; }
   #stage.bad { background: #1b2430; border-left-color: #5e81ac; color: #d8dee9; }
-  #danger, #reboot, #verdict { display:none !important; }
+  #danger, #reboot, #verdict { display:none; }
+
+  #danger {
+    font-size: 24px; font-weight: 700; padding: 16px 18px;
+    margin-bottom: 14px; border-radius: 8px; background: #3a1118;
+    border: 4px solid #ff6473; color: #ffe3e6; white-space: pre-wrap;
+    line-height: 1.3;
+  }
+  #danger.on { display:block; }
 
   #reboot { display: none; font-size: 34px; font-weight: 800; padding: 20px 18px;
             margin-bottom: 14px; border-radius: 8px; background: #4a0d10;
             border: 5px solid #ff5566; color: #ffe3e6; white-space: pre-wrap;
             line-height: 1.25; }
-  #reboot.on { display:none; }
+  #reboot.on { display:block; }
   #reboot.fine { display:none; }
 
   #verdict { display: none; font-size: 26px; font-weight: 700; padding: 16px 18px;
              margin-bottom: 14px; border-radius: 8px; background: #101a26;
              border: 4px solid #6d7788; color: #dfe7f0; white-space: pre-wrap;
              line-height: 1.3; }
-  #verdict.on   { display:none; }
+  #verdict.on   { display:block; }
   #verdict.good { background: #0f2c17; border-color: #47c76a; color: #d4f7de; }
   #verdict.bad  { background: #101a26; border-color: #6d7788; color: #dfe7f0; }
   #verdict.warn { background: #2e2413; border-color: #ebcb8b; color: #f6e6bd; }
@@ -123,8 +131,6 @@
   body.quiet #wrap,
   body.quiet #early,
   body.quiet #vitals,
-  body.quiet #verdict,
-  body.quiet #danger,
   body.quiet #stage,
   body.quiet td.d .pu,
   body.quiet td.d .ev                     { display: none; }
@@ -1439,12 +1445,14 @@ function danger(text) {
     if (elfldrSpawned) return;
     setCatResult(false);
     dangerEl.textContent = text;
-    dangerEl.className = "";
+    dangerEl.className = "on";
 }
 
 function clearFailureBanners() {
     dangerEl.textContent = "";
     dangerEl.className = "";
+    rebootEl.textContent = "";
+    rebootEl.className = "";
     verdictEl.textContent = "";
     verdictEl.className = "";
 }
@@ -1465,20 +1473,31 @@ function setCatResult(success) {
 function verdictBanner(kind, text) {
     if (kind === "bad") setCatResult(false);
     if (elfldrSpawned && kind === "bad") return;
+    rebootEl.textContent = "";
+    rebootEl.className = "";
     verdictEl.textContent = text;
-    verdictEl.className = kind || "";
+    verdictEl.className = "on" + (kind ? " " + kind : "");
 }
 function vitals(text) { vitalsEl.textContent = text; vitalsEl.className = "on"; }
 
 function showVerdict(reboot, text) {
     if (reboot) setCatResult(false);
     if (elfldrSpawned && reboot) {
-        rebootEl.textContent = "ELF LOADER READY";
-        rebootEl.className = "on fine";
+        verdictEl.textContent = "ELF LOADER READY";
+        verdictEl.className = "on good";
         return;
     }
-    rebootEl.textContent = text;
-    rebootEl.className = reboot ? "" : "fine";
+    if (reboot) {
+        verdictEl.textContent = "";
+        verdictEl.className = "";
+        rebootEl.textContent = text;
+        rebootEl.className = "on";
+        return;
+    }
+    rebootEl.textContent = "";
+    rebootEl.className = "";
+    verdictEl.textContent = text;
+    verdictEl.className = "on good";
 }
 
 function vitalsText(prefix) {
