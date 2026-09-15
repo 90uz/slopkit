@@ -54,6 +54,11 @@ a:active, a:focus { outline: 0; border: none; }
 }
 
 .btn-secondary { padding: .5rem 2rem; font-size: 1rem; }
+.btn[aria-disabled="true"] {
+  opacity: .45;
+  pointer-events: none;
+  cursor: not-allowed;
+}
 
 #main-content { position: relative; box-sizing: border-box; }
 #main-content > div {
@@ -80,6 +85,12 @@ a:active, a:focus { outline: 0; border: none; }
   width: 70%;
   max-width: none;
   margin: .5rem auto;
+}
+#fw-compat-note {
+  max-width: 70%;
+  margin: .4rem auto 0;
+  white-space: normal;
+  overflow: visible;
 }
 
 .selected { opacity: 1 !important; pointer-events: auto !important; }
