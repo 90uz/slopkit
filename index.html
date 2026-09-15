@@ -8,7 +8,7 @@
 </head>
 <body>
   <div class="p-2">
-    <h1 class="text-center">PS5 SlopKit Jailbreak (9.00-12.00)</h1>
+    <h1 class="text-center">PS5 SlopKit Jailbreak (9.00-13.00)</h1>
     <p class="text-center" id="top-bar-text">Current Firmware: <span class="fw-bold" id="current-fw">Unknown</span></p>
   </div>
 
@@ -27,19 +27,37 @@
   </div>
 
   <script>
+const stage5Href = "slopkit/poops.html?go=1&auto=1&production=1&trigger=netcontrol&attempts=8&only=ps0_preflight,ps1_prepare,ps3_stage0,ps4_validate,ps5_stage1,ps6_stage2,ps8_stage3,ps9_stage4,ps10_stage5&log=debug&payload=1&v=final";
+const stage5ReuseHref = "slopkit/poops.html?go=1&auto=1&production=1&trigger=netcontrol&attempts=8&only=ps0_preflight,ps1_prepare,ps3_stage0,ps4_validate,ps5_stage1,ps6_stage2,ps8_stage3,ps9_stage4,ps10_stage5&log=debug&payload=1&reuse=1&v=final";
+const stage4Href = "slopkit/poops.html?go=1&trigger=netcontrol&attempts=8&only=ps0_preflight,ps1_prepare,ps3_stage0,ps4_validate,ps5_stage1,ps6_stage2,ps8_stage3,ps9_stage4&log=debug&v=final";
+
 try {
     // Détection de la version du micrologiciel de la PS5
     var firmwareMatch = /PlayStation 5\/(\d+\.\d+)/.exec(navigator.userAgent);
     var firmware = firmwareMatch ? firmwareMatch[1] : "";
+    var runJb = document.getElementById("run-jb");
+    var runSender = document.getElementById("run-sender");
     
     // Affiche la version détectée à l'écran (ex: 13.00)
     document.getElementById("current-fw").textContent = firmware || "Not detected";
+    if (runJb) runJb.href = stage5Href;
+    if (runSender) runSender.href = stage5ReuseHref;
     
-    // Si la console est en version 13.00, on s'assure que le système charge vos offsets personnalisés
+    // En 13.00, le chaînage userland/kernel est disponible mais l'étape payload reste désactivée
     if (firmware === "13.00") {
         console.log("Console 13.00 détectée. Préparation des tables d'offsets...");
-        // Optionnel : Vous pouvez ajouter une alerte visuelle pour confirmer
-        document.getElementById("top-bar-text").innerHTML += " <span style='color: green;'>(Offsets 13.00 activés)</span>";
+        if (runJb) {
+            runJb.href = stage4Href;
+            runJb.textContent = "Kernel exploit";
+            runJb.title = "13.00 currently stops before the payload stage.";
+        }
+        if (runSender) {
+            runSender.removeAttribute("href");
+            runSender.textContent = "Payloads unavailable on 13.00";
+            runSender.setAttribute("aria-disabled", "true");
+            runSender.title = "Payload sending is not enabled yet on 13.00.";
+        }
+        document.getElementById("top-bar-text").innerHTML += " <span style='color: #ebcb8b;'>(13.00 stops before payload Stage 5)</span>";
     }
 } catch (e) { 
     console.error("Erreur de détection : ", e);
