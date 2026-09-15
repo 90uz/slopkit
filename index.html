@@ -9,7 +9,10 @@
 <body>
   <div class="p-2">
     <h1 class="text-center">PS5 SlopKit Jailbreak (9.00-13.00)</h1>
-    <p class="text-center" id="top-bar-text">Current Firmware: <span class="fw-bold" id="current-fw">Unknown</span></p>
+    <p class="text-center" id="top-bar-text">
+      Current Firmware: <span class="fw-bold" id="current-fw">Unknown</span>
+      <span class="firmware-stage-note" id="fw-stage-note" hidden></span>
+    </p>
   </div>
 
   <div id="main-content">
@@ -18,7 +21,7 @@
          href="slopkit/poops.html?go=1&amp;auto=1&amp;production=1&amp;trigger=netcontrol&amp;attempts=8&amp;only=ps0_preflight,ps1_prepare,ps3_stage0,ps4_validate,ps5_stage1,ps6_stage2,ps8_stage3,ps9_stage4,ps10_stage5&amp;log=debug&amp;payload=1&amp;v=final">Jailbreak</a>
       <a tabindex="0" class="btn btn-secondary" id="run-sender"
          href="slopkit/poops.html?go=1&amp;auto=1&amp;production=1&amp;trigger=netcontrol&amp;attempts=8&amp;only=ps0_preflight,ps1_prepare,ps3_stage0,ps4_validate,ps5_stage1,ps6_stage2,ps8_stage3,ps9_stage4,ps10_stage5&amp;log=debug&amp;payload=1&amp;reuse=1&amp;v=final">Payloads (sender)</a>
-      <p class="text-secondary" id="fw-compat-note" hidden></p>
+      <p class="text-secondary" id="fw-compat-note" hidden aria-live="polite"></p>
     </div>
   </div>
 
@@ -33,19 +36,36 @@ const stage5ReuseHref = "slopkit/poops.html?go=1&auto=1&production=1&trigger=net
 const stage4Href = "slopkit/poops.html?go=1&trigger=netcontrol&attempts=8&only=ps0_preflight,ps1_prepare,ps3_stage0,ps4_validate,ps5_stage1,ps6_stage2,ps8_stage3,ps9_stage4&log=debug&v=final";
 
 try {
-    // Détection de la version du micrologiciel de la PS5
     var firmwareMatch = /PlayStation 5\/(\d+\.\d+)/.exec(navigator.userAgent);
     var firmware = firmwareMatch ? firmwareMatch[1] : "";
     var runJb = document.getElementById("run-jb");
     var runSender = document.getElementById("run-sender");
     var firmwareNote = document.getElementById("fw-compat-note");
-    
-    // Affiche la version détectée à l'écran (ex: 13.00)
+    var firmwareStageNote = document.getElementById("fw-stage-note");
+
     document.getElementById("current-fw").textContent = firmware || "Not detected";
-    if (runJb) runJb.href = stage5Href;
-    if (runSender) runSender.href = stage5ReuseHref;
-    
-    // En 13.00, le chaînage userland/kernel est disponible mais l'étape payload reste désactivée
+    if (runJb) {
+        runJb.href = stage5Href;
+        runJb.textContent = "Jailbreak";
+        runJb.removeAttribute("title");
+    }
+    if (runSender) {
+        runSender.href = stage5ReuseHref;
+        runSender.textContent = "Payloads (sender)";
+        runSender.removeAttribute("aria-disabled");
+        runSender.removeAttribute("aria-describedby");
+        runSender.removeAttribute("title");
+        runSender.setAttribute("tabindex", "0");
+    }
+    if (firmwareNote) {
+        firmwareNote.hidden = true;
+        firmwareNote.textContent = "";
+    }
+    if (firmwareStageNote) {
+        firmwareStageNote.hidden = true;
+        firmwareStageNote.textContent = "";
+    }
+
     if (firmware === "13.00") {
         console.log("Console 13.00 détectée. Préparation des tables d'offsets...");
         if (runJb) {
@@ -57,6 +77,7 @@ try {
             runSender.removeAttribute("href");
             runSender.textContent = "Payloads unavailable on 13.00";
             runSender.setAttribute("aria-disabled", "true");
+            runSender.setAttribute("aria-describedby", "fw-compat-note");
             runSender.setAttribute("tabindex", "-1");
             runSender.title = "Payload sending is not enabled yet on 13.00.";
         }
@@ -64,7 +85,10 @@ try {
             firmwareNote.hidden = false;
             firmwareNote.textContent = "13.00 compatibility mode: kernel exploit only, payload sender disabled.";
         }
-        document.getElementById("top-bar-text").innerHTML += " <span style='color: #ebcb8b;'>(13.00 stops before payload Stage 5)</span>";
+        if (firmwareStageNote) {
+            firmwareStageNote.hidden = false;
+            firmwareStageNote.textContent = "(13.00 stops before payload Stage 5)";
+        }
     }
 } catch (e) { 
     console.error("Erreur de détection : ", e);
