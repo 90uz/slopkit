@@ -22,6 +22,10 @@
       <a tabindex="0" class="btn btn-secondary" id="run-sender"
          href="slopkit/poops.html?go=1&amp;auto=1&amp;production=1&amp;trigger=netcontrol&amp;attempts=8&amp;only=ps0_preflight,ps1_prepare,ps3_stage0,ps4_validate,ps5_stage1,ps6_stage2,ps8_stage3,ps9_stage4,ps10_stage5&amp;log=debug&amp;payload=1&amp;reuse=1&amp;v=final">Payloads (sender)</a>
       <p class="text-secondary" id="fw-compat-note" hidden aria-live="polite"></p>
+      <p class="text-secondary" id="fw-prereq-note" hidden aria-live="polite"></p>
+      <p class="text-secondary" id="fw-support-matrix">
+        Firmware support: 9.00-12.00 = full jailbreak + sender | 13.00 = kernel-only (no sender) | others = unsupported.
+      </p>
     </div>
   </div>
 
@@ -31,32 +35,77 @@
   </div>
 
   <script>
-const stage5Href = "slopkit/poops.html?go=1&auto=1&production=1&trigger=netcontrol&attempts=8&only=ps0_preflight,ps1_prepare,ps3_stage0,ps4_validate,ps5_stage1,ps6_stage2,ps8_stage3,ps9_stage4,ps10_stage5&log=debug&payload=1&v=final";
-const stage5ReuseHref = "slopkit/poops.html?go=1&auto=1&production=1&trigger=netcontrol&attempts=8&only=ps0_preflight,ps1_prepare,ps3_stage0,ps4_validate,ps5_stage1,ps6_stage2,ps8_stage3,ps9_stage4,ps10_stage5&log=debug&payload=1&reuse=1&v=final";
-const stage4Href = "slopkit/poops.html?go=1&trigger=netcontrol&attempts=8&only=ps0_preflight,ps1_prepare,ps3_stage0,ps4_validate,ps5_stage1,ps6_stage2,ps8_stage3,ps9_stage4&log=debug&v=final";
+const ROUTE = {
+    stage5: "slopkit/poops.html?go=1&auto=1&production=1&trigger=netcontrol&attempts=8&only=ps0_preflight,ps1_prepare,ps3_stage0,ps4_validate,ps5_stage1,ps6_stage2,ps8_stage3,ps9_stage4,ps10_stage5&log=debug&payload=1&v=final",
+    stage5Reuse: "slopkit/poops.html?go=1&auto=1&production=1&trigger=netcontrol&attempts=8&only=ps0_preflight,ps1_prepare,ps3_stage0,ps4_validate,ps5_stage1,ps6_stage2,ps8_stage3,ps9_stage4,ps10_stage5&log=debug&payload=1&reuse=1&v=final",
+    stage4: "slopkit/poops.html?go=1&trigger=netcontrol&attempts=8&only=ps0_preflight,ps1_prepare,ps3_stage0,ps4_validate,ps5_stage1,ps6_stage2,ps8_stage3,ps9_stage4&log=debug&v=final"
+};
+
+function normalizeRoute(route) {
+    const url = new URL(route, window.location.href);
+    return `${url.pathname}${url.search}`;
+}
+
+function isCanonicalRoute(route, expected) {
+    return normalizeRoute(route) === normalizeRoute(expected);
+}
+
+function setActionState(link, config) {
+    if (!link) return;
+    link.textContent = config.label;
+    link.title = config.title || "";
+    if (config.disabled) {
+        link.removeAttribute("href");
+        link.setAttribute("aria-disabled", "true");
+        link.setAttribute("aria-describedby", "fw-compat-note");
+        link.setAttribute("tabindex", "-1");
+        return;
+    }
+    link.href = config.href;
+    link.removeAttribute("aria-disabled");
+    link.removeAttribute("aria-describedby");
+    link.setAttribute("tabindex", "0");
+}
+
+function firmwareStateFromVersion(firmware) {
+    if (firmware === "13.00") return "partial";
+    const parsed = Number.parseFloat(firmware);
+    if (!Number.isFinite(parsed)) return "unknown";
+    if (parsed < 9.0 || parsed > 13.0) return "unsupported";
+    return "full";
+}
+
+function runCompatibilitySelfChecks() {
+    const stateChecks = [
+        ["9.00", "full"],
+        ["12.00", "full"],
+        ["13.00", "partial"],
+        ["8.99", "unsupported"],
+        ["", "unknown"]
+    ];
+    for (const [firmware, expected] of stateChecks) {
+        if (firmwareStateFromVersion(firmware) !== expected) {
+            throw new Error(`Firmware state self-check failed for ${firmware || "empty"}`);
+        }
+    }
+    if (!isCanonicalRoute(ROUTE.stage5Reuse, ROUTE.stage5Reuse) || !isCanonicalRoute(ROUTE.stage5, ROUTE.stage5)) {
+        throw new Error("Route canonical self-check failed");
+    }
+}
 
 try {
+    runCompatibilitySelfChecks();
     var firmwareMatch = /PlayStation 5\/(\d+\.\d+)/.exec(navigator.userAgent);
     var firmware = firmwareMatch ? firmwareMatch[1] : "";
     var runJb = document.getElementById("run-jb");
     var runSender = document.getElementById("run-sender");
     var firmwareNote = document.getElementById("fw-compat-note");
     var firmwareStageNote = document.getElementById("fw-stage-note");
+    var prereqNote = document.getElementById("fw-prereq-note");
+    var firmwareState = firmwareStateFromVersion(firmware);
 
     document.getElementById("current-fw").textContent = firmware || "Not detected";
-    if (runJb) {
-        runJb.href = stage5Href;
-        runJb.textContent = "Jailbreak";
-        runJb.removeAttribute("title");
-    }
-    if (runSender) {
-        runSender.href = stage5ReuseHref;
-        runSender.textContent = "Payloads (sender)";
-        runSender.removeAttribute("aria-disabled");
-        runSender.removeAttribute("aria-describedby");
-        runSender.removeAttribute("title");
-        runSender.setAttribute("tabindex", "0");
-    }
+
     if (firmwareNote) {
         firmwareNote.hidden = true;
         firmwareNote.textContent = "";
@@ -65,22 +114,26 @@ try {
         firmwareStageNote.hidden = true;
         firmwareStageNote.textContent = "";
     }
+    if (prereqNote) {
+        prereqNote.hidden = false;
+        prereqNote.textContent = "Prerequisites: stable internet, keep browser open during execution, reboot and retry after failures.";
+    }
 
-    if (firmware === "13.00") {
-        console.log("Console 13.00 détectée. Préparation des tables d'offsets...");
-        if (runJb) {
-            runJb.href = stage4Href;
-            runJb.textContent = "Kernel exploit";
-            runJb.title = "13.00 currently stops before the payload stage.";
-        }
-        if (runSender) {
-            runSender.removeAttribute("href");
-            runSender.textContent = "Payloads unavailable on 13.00";
-            runSender.setAttribute("aria-disabled", "true");
-            runSender.setAttribute("aria-describedby", "fw-compat-note");
-            runSender.setAttribute("tabindex", "-1");
-            runSender.title = "Payload sending is not enabled yet on 13.00.";
-        }
+    if (firmwareState === "full") {
+        setActionState(runJb, { href: ROUTE.stage5, label: "Jailbreak" });
+        setActionState(runSender, { href: ROUTE.stage5Reuse, label: "Payloads (sender)" });
+    } else if (firmwareState === "partial") {
+        console.log("13.00 console detected. Kernel-only compatibility mode enabled.");
+        setActionState(runJb, {
+            href: ROUTE.stage4,
+            label: "Kernel exploit",
+            title: "13.00 currently stops before the payload stage."
+        });
+        setActionState(runSender, {
+            disabled: true,
+            label: "Payloads unavailable on 13.00",
+            title: "Payload sending is not enabled yet on 13.00."
+        });
         if (firmwareNote) {
             firmwareNote.hidden = false;
             firmwareNote.textContent = "13.00 compatibility mode: kernel exploit only, payload sender disabled.";
@@ -89,9 +142,64 @@ try {
             firmwareStageNote.hidden = false;
             firmwareStageNote.textContent = "(13.00 stops before payload Stage 5)";
         }
+    } else {
+        setActionState(runJb, {
+            disabled: true,
+            label: "Jailbreak unavailable",
+            title: "This firmware is outside the supported range (9.00-13.00)."
+        });
+        setActionState(runSender, {
+            disabled: true,
+            label: "Payloads unavailable",
+            title: "This firmware is outside the supported range (9.00-13.00)."
+        });
+        if (firmwareNote) {
+            firmwareNote.hidden = false;
+            firmwareNote.textContent = firmwareState === "unknown"
+                ? "Firmware not detected. Manual confirmation required: only 9.00-13.00 is supported."
+                : "Unsupported firmware detected. Supported range: 9.00-13.00.";
+        }
     }
-} catch (e) { 
-    console.error("Erreur de détection : ", e);
+
+    if (runJb) {
+        runJb.addEventListener("click", function (event) {
+            if (runJb.getAttribute("aria-disabled") === "true") {
+                event.preventDefault();
+                return;
+            }
+            if (firmwareState === "partial") {
+                const currentHref = runJb.getAttribute("href") || "";
+                if (!isCanonicalRoute(currentHref, ROUTE.stage4)) {
+                    event.preventDefault();
+                    throw new Error("Blocked non-canonical kernel route.");
+                }
+                runJb.href = ROUTE.stage4;
+                return;
+            }
+            const currentHref = runJb.getAttribute("href") || "";
+            if (!isCanonicalRoute(currentHref, ROUTE.stage5)) {
+                event.preventDefault();
+                throw new Error("Blocked non-canonical jailbreak route.");
+            }
+            runJb.href = ROUTE.stage5;
+        });
+    }
+    if (runSender) {
+        runSender.addEventListener("click", function (event) {
+            if (runSender.getAttribute("aria-disabled") === "true") {
+                event.preventDefault();
+                return;
+            }
+            const currentHref = runSender.getAttribute("href") || "";
+            if (firmwareState !== "full" || !isCanonicalRoute(currentHref, ROUTE.stage5Reuse)) {
+                event.preventDefault();
+                throw new Error("Blocked non-canonical sender route.");
+            }
+            runSender.href = ROUTE.stage5Reuse;
+        });
+    }
+} catch (e) {
+    console.error("Firmware compatibility error:", e);
 }
 
 try { document.getElementById("run-jb").focus(); } catch (e) { }

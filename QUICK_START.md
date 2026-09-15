@@ -6,6 +6,11 @@
 - ✅ Navigateur Web PS5
 - ✅ 10 GB espace libre
 
+## Matrice de Compatibilité Firmware
+- ✅ **9.00-12.00**: jailbreak + payload sender disponibles
+- ⚠️ **13.00**: mode partiel (kernel exploit uniquement, sender désactivé)
+- ❌ **Autres versions**: non supportées
+
 ## 3 Étapes Simples
 
 ### 1️⃣ Accès (1 minute)
@@ -17,7 +22,7 @@
 
 ### 2️⃣ Exécution (2-3 minutes)
 ```
-1. Appuyez sur le bouton "RUN EXPLOIT"
+1. Appuyez sur le bouton "Jailbreak" (ou "Kernel exploit" sur 13.00)
 2. NE FERMEZ PAS le navigateur
 3. Attendez (vous verrez des messages)
 4. La PS5 redémarrera si succès
@@ -25,7 +30,7 @@
 
 ### 3️⃣ Vérification (30 secondes)
 ```
-✅ SUCCÈS: Votre payload s'est chargé
+✅ SUCCÈS: Le flux compatible avec votre firmware s'est exécuté
 ❌ ERREUR: Voir section Dépannage Rapide ci-dessous
 ```
 

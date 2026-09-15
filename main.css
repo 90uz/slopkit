@@ -28,7 +28,11 @@ body {
 }
 
 a { color: var(--text-color-secondary); }
-a:active, a:focus { outline: 0; border: none; }
+a:active { border: none; }
+a:focus-visible {
+  outline: .15rem solid #8fbcff;
+  outline-offset: .2rem;
+}
 
 .btn {
   padding: 1rem 2rem;
@@ -88,6 +92,13 @@ a:active, a:focus { outline: 0; border: none; }
   margin: .5rem auto;
 }
 #fw-compat-note {
+  max-width: 70%;
+  margin: .4rem auto 0;
+  white-space: normal;
+  overflow: visible;
+}
+#fw-prereq-note,
+#fw-support-matrix {
   max-width: 70%;
   margin: .4rem auto 0;
   white-space: normal;
