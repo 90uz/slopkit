@@ -22,7 +22,8 @@ body {
   height: 100vh;
   padding: 0;
   margin: 0;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
   box-sizing: border-box;
 }
 
@@ -92,6 +93,9 @@ a:active, a:focus { outline: 0; border: none; }
   white-space: normal;
   overflow: visible;
 }
+.firmware-stage-note {
+  color: #ebcb8b;
+}
 
 .selected { opacity: 1 !important; pointer-events: auto !important; }
 .position-relative { position: relative; }
@@ -101,9 +105,6 @@ a:active, a:focus { outline: 0; border: none; }
   color: var(--text-color-secondary);
   margin: 0;
   padding: 0;
-  text-overflow: ellipsis;
-  overflow: hidden;
-  white-space: nowrap;
   font-size: .8rem;
 }
 .p-2 { padding: .5rem !important; }
