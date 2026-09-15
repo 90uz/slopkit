@@ -28,7 +28,11 @@ body {
 }
 
 a { color: var(--text-color-secondary); }
-a:active, a:focus { outline: 0; border: none; }
+a:active { border: none; }
+a:focus-visible {
+  outline: .15rem solid #8fbcff;
+  outline-offset: .2rem;
+}
 
 .btn {
   padding: 1rem 2rem;

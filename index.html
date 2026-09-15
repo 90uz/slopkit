@@ -38,6 +38,9 @@ const stage4Href = "slopkit/poops.html?go=1&trigger=netcontrol&attempts=8&only=p
 try {
     var firmwareMatch = /PlayStation 5\/(\d+\.\d+)/.exec(navigator.userAgent);
     var firmware = firmwareMatch ? firmwareMatch[1] : "";
+    var parsedFirmware = Number.parseFloat(firmware);
+    var hasKnownFirmware = Number.isFinite(parsedFirmware);
+    var isSupportedFirmware = hasKnownFirmware && parsedFirmware >= 9.0 && parsedFirmware <= 13.0;
     var runJb = document.getElementById("run-jb");
     var runSender = document.getElementById("run-sender");
     var firmwareNote = document.getElementById("fw-compat-note");
@@ -66,8 +69,29 @@ try {
         firmwareStageNote.textContent = "";
     }
 
-    if (firmware === "13.00") {
-        console.log("Console 13.00 détectée. Préparation des tables d'offsets...");
+    if (!isSupportedFirmware) {
+        if (runJb) {
+            runJb.removeAttribute("href");
+            runJb.textContent = "Jailbreak unavailable";
+            runJb.setAttribute("aria-disabled", "true");
+            runJb.setAttribute("aria-describedby", "fw-compat-note");
+            runJb.setAttribute("tabindex", "-1");
+            runJb.title = "This firmware is outside the supported range (9.00-13.00).";
+        }
+        if (runSender) {
+            runSender.removeAttribute("href");
+            runSender.textContent = "Payloads unavailable";
+            runSender.setAttribute("aria-disabled", "true");
+            runSender.setAttribute("aria-describedby", "fw-compat-note");
+            runSender.setAttribute("tabindex", "-1");
+            runSender.title = "This firmware is outside the supported range (9.00-13.00).";
+        }
+        if (firmwareNote) {
+            firmwareNote.hidden = false;
+            firmwareNote.textContent = "Unsupported firmware detected. Supported range: 9.00-13.00.";
+        }
+    } else if (firmware === "13.00") {
+        console.log("13.00 console detected. Preparing offsets tables...");
         if (runJb) {
             runJb.href = stage4Href;
             runJb.textContent = "Kernel exploit";
@@ -91,7 +115,7 @@ try {
         }
     }
 } catch (e) { 
-    console.error("Erreur de détection : ", e);
+    console.error("Firmware detection error:", e);
 }
 
 try { document.getElementById("run-jb").focus(); } catch (e) { }
