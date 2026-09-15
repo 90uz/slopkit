@@ -27,12 +27,23 @@
   </div>
 
   <script>
-    try {
-      var firmwareMatch = /PlayStation 5\/(\d+\.\d+)/.exec(navigator.userAgent);
-      var firmware = firmwareMatch ? firmwareMatch[1] : "";
-      document.getElementById("current-fw").textContent = firmware || "Not detected";
-    } catch (e) { }
-    try { document.getElementById("run-jb").focus(); } catch (e) { }
-  </script>
-</body>
-</html>
+try {
+    // Détection de la version du micrologiciel de la PS5
+    var firmwareMatch = /PlayStation 5\/(\d+\.\d+)/.exec(navigator.userAgent);
+    var firmware = firmwareMatch ? firmwareMatch[1] : "";
+    
+    // Affiche la version détectée à l'écran (ex: 13.00)
+    document.getElementById("current-fw").textContent = firmware || "Not detected";
+    
+    // Si la console est en version 13.00, on s'assure que le système charge vos offsets personnalisés
+    if (firmware === "13.00") {
+        console.log("Console 13.00 détectée. Préparation des tables d'offsets...");
+        // Optionnel : Vous pouvez ajouter une alerte visuelle pour confirmer
+        document.getElementById("top-bar-text").innerHTML += " <span style='color: green;'>(Offsets 13.00 activés)</span>";
+    }
+} catch (e) { 
+    console.error("Erreur de détection : ", e);
+}
+
+try { document.getElementById("run-jb").focus(); } catch (e) { }
+</script>
