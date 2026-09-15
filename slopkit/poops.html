@@ -587,6 +587,7 @@ const REUSE_QUERY = Object.freeze({
     reuse: "1", v: ROUTE_VERSION
 });
 const STAGE5_INTENT = Q.has("stage5") || Q.has("payload")
+    || REUSE_ELFLDR
     || Q.getAll("proof").some(value => value.indexOf("stage5") === 0)
     || Q.getAll("only").some(value => value.split(",")
         .some(key => key.trim() === "ps10_stage5"));
@@ -615,6 +616,17 @@ const STAGE5_REQUEST_ERROR_TEXT = STAGE5_REQUEST_ERROR === "unsupported-stage5-f
     && window.fw_str === "13.00"
     ? "unsupported-stage5-firmware (13.00 currently stops before payload Stage 5)"
     : STAGE5_REQUEST_ERROR;
+const STAGE5_COMPAT_CHECKS = Object.freeze([
+    {
+        name: "fw13-excluded-from-stage5-allowlist",
+        ok: STAGE5_FIRMWARES.indexOf("13.00") < 0
+    },
+    {
+        name: "reuse-counts-as-stage5-intent",
+        ok: !REUSE_ELFLDR || STAGE5_INTENT
+    }
+]);
+const STAGE5_COMPAT_FAILURE = STAGE5_COMPAT_CHECKS.find(check => !check.ok) || null;
 
 const PRODUCTION_REQUEST_ERROR = (() => {
     if (!Q.has("production") && !Q.has("auto") && !Q.has("next")) return "";
@@ -2442,6 +2454,15 @@ function lastRunText() {
 (async function entry() {
 
     screenLine("slopkit -- reading the one-shot safety latch");
+
+    if (STAGE5_COMPAT_FAILURE) {
+        renderNav("", false);
+        stage("Compatibility guard failed: " + STAGE5_COMPAT_FAILURE.name, "bad");
+        summaryEl.textContent = "NOTHING was cleared or executed.";
+        flushMark("POOPS-COMPAT-CHECK-FAILED", STAGE5_COMPAT_FAILURE.name);
+        sendRemoteEvents(false);
+        return;
+    }
 
     if (PRODUCTION_REQUEST_ERROR) {
         renderNav("", false);

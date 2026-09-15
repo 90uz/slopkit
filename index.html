@@ -18,6 +18,7 @@
          href="slopkit/poops.html?go=1&amp;auto=1&amp;production=1&amp;trigger=netcontrol&amp;attempts=8&amp;only=ps0_preflight,ps1_prepare,ps3_stage0,ps4_validate,ps5_stage1,ps6_stage2,ps8_stage3,ps9_stage4,ps10_stage5&amp;log=debug&amp;payload=1&amp;v=final">Jailbreak</a>
       <a tabindex="0" class="btn btn-secondary" id="run-sender"
          href="slopkit/poops.html?go=1&amp;auto=1&amp;production=1&amp;trigger=netcontrol&amp;attempts=8&amp;only=ps0_preflight,ps1_prepare,ps3_stage0,ps4_validate,ps5_stage1,ps6_stage2,ps8_stage3,ps9_stage4,ps10_stage5&amp;log=debug&amp;payload=1&amp;reuse=1&amp;v=final">Payloads (sender)</a>
+      <p class="text-secondary" id="fw-compat-note" hidden></p>
     </div>
   </div>
 
@@ -37,6 +38,7 @@ try {
     var firmware = firmwareMatch ? firmwareMatch[1] : "";
     var runJb = document.getElementById("run-jb");
     var runSender = document.getElementById("run-sender");
+    var firmwareNote = document.getElementById("fw-compat-note");
     
     // Affiche la version détectée à l'écran (ex: 13.00)
     document.getElementById("current-fw").textContent = firmware || "Not detected";
@@ -55,7 +57,12 @@ try {
             runSender.removeAttribute("href");
             runSender.textContent = "Payloads unavailable on 13.00";
             runSender.setAttribute("aria-disabled", "true");
+            runSender.setAttribute("tabindex", "-1");
             runSender.title = "Payload sending is not enabled yet on 13.00.";
+        }
+        if (firmwareNote) {
+            firmwareNote.hidden = false;
+            firmwareNote.textContent = "13.00 compatibility mode: kernel exploit only, payload sender disabled.";
         }
         document.getElementById("top-bar-text").innerHTML += " <span style='color: #ebcb8b;'>(13.00 stops before payload Stage 5)</span>";
     }
