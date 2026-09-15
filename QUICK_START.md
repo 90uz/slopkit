@@ -7,8 +7,7 @@
 - ✅ 10 GB espace libre
 
 ## Matrice de Compatibilité Firmware
-- ✅ **9.00-12.00**: jailbreak + payload sender disponibles
-- ⚠️ **13.00**: mode partiel (kernel exploit uniquement, sender désactivé)
+- ✅ **9.00-13.00**: jailbreak + chargeur ELF + payload sender disponibles
 - ❌ **Autres versions**: non supportées
 
 ## 3 Étapes Simples
@@ -22,7 +21,7 @@
 
 ### 2️⃣ Exécution (2-3 minutes)
 ```
-1. Appuyez sur le bouton "Jailbreak" (ou "Kernel exploit" sur 13.00)
+1. Appuyez sur le bouton "Jailbreak"
 2. NE FERMEZ PAS le navigateur
 3. Attendez (vous verrez des messages)
 4. La PS5 redémarrera si succès

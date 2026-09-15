@@ -24,7 +24,7 @@
       <p class="text-secondary" id="fw-compat-note" hidden aria-live="polite"></p>
       <p class="text-secondary" id="fw-prereq-note" hidden aria-live="polite"></p>
       <p class="text-secondary" id="fw-support-matrix">
-        Firmware support: 9.00-12.00 = full jailbreak + sender | 13.00 = kernel-only (no sender) | others = unsupported.
+        Firmware support: 9.00-13.00 = jailbreak + ELF loader + sender | others = unsupported.
       </p>
     </div>
   </div>
@@ -37,8 +37,7 @@
   <script>
 const ROUTE = {
     stage5: "slopkit/poops.html?go=1&auto=1&production=1&trigger=netcontrol&attempts=8&only=ps0_preflight,ps1_prepare,ps3_stage0,ps4_validate,ps5_stage1,ps6_stage2,ps8_stage3,ps9_stage4,ps10_stage5&log=debug&payload=1&v=final",
-    stage5Reuse: "slopkit/poops.html?go=1&auto=1&production=1&trigger=netcontrol&attempts=8&only=ps0_preflight,ps1_prepare,ps3_stage0,ps4_validate,ps5_stage1,ps6_stage2,ps8_stage3,ps9_stage4,ps10_stage5&log=debug&payload=1&reuse=1&v=final",
-    stage4: "slopkit/poops.html?go=1&trigger=netcontrol&attempts=8&only=ps0_preflight,ps1_prepare,ps3_stage0,ps4_validate,ps5_stage1,ps6_stage2,ps8_stage3,ps9_stage4&log=debug&v=final"
+    stage5Reuse: "slopkit/poops.html?go=1&auto=1&production=1&trigger=netcontrol&attempts=8&only=ps0_preflight,ps1_prepare,ps3_stage0,ps4_validate,ps5_stage1,ps6_stage2,ps8_stage3,ps9_stage4,ps10_stage5&log=debug&payload=1&reuse=1&v=final"
 };
 
 function normalizeRoute(route) {
@@ -68,7 +67,6 @@ function setActionState(link, config) {
 }
 
 function firmwareStateFromVersion(firmware) {
-    if (firmware === "13.00") return "partial";
     const parsed = Number.parseFloat(firmware);
     if (!Number.isFinite(parsed)) return "unknown";
     if (parsed < 9.0 || parsed > 13.0) return "unsupported";
@@ -79,7 +77,7 @@ function runCompatibilitySelfChecks() {
     const stateChecks = [
         ["9.00", "full"],
         ["12.00", "full"],
-        ["13.00", "partial"],
+        ["13.00", "full"],
         ["8.99", "unsupported"],
         ["", "unknown"]
     ];
@@ -122,26 +120,6 @@ try {
     if (firmwareState === "full") {
         setActionState(runJb, { href: ROUTE.stage5, label: "Jailbreak" });
         setActionState(runSender, { href: ROUTE.stage5Reuse, label: "Payloads (sender)" });
-    } else if (firmwareState === "partial") {
-        console.log("13.00 console detected. Kernel-only compatibility mode enabled.");
-        setActionState(runJb, {
-            href: ROUTE.stage4,
-            label: "Kernel exploit",
-            title: "13.00 currently stops before the payload stage."
-        });
-        setActionState(runSender, {
-            disabled: true,
-            label: "Payloads unavailable on 13.00",
-            title: "Payload sending is not enabled yet on 13.00."
-        });
-        if (firmwareNote) {
-            firmwareNote.hidden = false;
-            firmwareNote.textContent = "13.00 compatibility mode: kernel exploit only, payload sender disabled.";
-        }
-        if (firmwareStageNote) {
-            firmwareStageNote.hidden = false;
-            firmwareStageNote.textContent = "(13.00 stops before payload Stage 5)";
-        }
     } else {
         setActionState(runJb, {
             disabled: true,
@@ -165,15 +143,6 @@ try {
         runJb.addEventListener("click", function (event) {
             if (runJb.getAttribute("aria-disabled") === "true") {
                 event.preventDefault();
-                return;
-            }
-            if (firmwareState === "partial") {
-                const currentHref = runJb.getAttribute("href") || "";
-                if (!isCanonicalRoute(currentHref, ROUTE.stage4)) {
-                    event.preventDefault();
-                    throw new Error("Blocked non-canonical kernel route.");
-                }
-                runJb.href = ROUTE.stage4;
                 return;
             }
             const currentHref = runJb.getAttribute("href") || "";
