@@ -22,11 +22,9 @@ button:disabled{opacity:0.4;cursor:default}
 <div id="box">
 <p><a class="linkbtn" href="index.html">Back</a></p>
 <h1>PS5 Notify Launcher</h1>
-<p>Detects firmware from User-Agent, loads <code>offsets.json</code> (09.00&ndash;13.60).
-Code pages can only be <i>called</i>, not read — stub addresses are verified
-with <b>Call stub</b>.</p>
-<p class="done">13.40 status: 331-entry syscall table verified live (5/5 calls + GOT agreement). Userland 9/9 confirmed on hardware.</p>
-<p class="note">13.40+ remains validation-focused. Keep the notify flow limited to supported profiles, update compatibility messaging when profiles change, and verify results before treating a profile as ready.</p>
+<p>Detects firmware from User-Agent and loads supported profiles from <code>offsets.json</code> (09.00&ndash;13.60).</p>
+<p class="done">Current notify profiles are available through 13.60.</p>
+<p class="note">13.40+ remains validation-focused. Keep messaging limited to confirmed support status and verify results before marking a profile as ready.</p>
 <p>Firmware: <select id="fw"></select>
 <label>Memory: <select id="mem"><option value="512">normal (n=512)</option><option value="128" selected>low (n=128)</option><option value="64">ultra-low (n=64)</option><option value="emergency">emergency (n=32, full carrier)</option></select></label></p>
 <p><button id="go" disabled>Run notify proof</button>
