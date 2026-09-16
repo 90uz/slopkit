@@ -79,7 +79,8 @@ function bindCanonicalRoute(link, expectedRoute, shouldBlock) {
         }
         if (!isCanonicalRoute(currentHref, expectedRoute)) {
             event.preventDefault();
-            throw new Error(`Blocked non-canonical route for ${link.id || "action"}.`);
+            link.href = expectedRoute;
+            return;
         }
         link.href = expectedRoute;
     };
@@ -201,7 +202,10 @@ try {
     }
 }
 
-try { document.getElementById("run-jb").focus(); } catch (e) { }
+try {
+    const preferredAction = document.querySelector("#pre-jb-view a[href]");
+    if (preferredAction) preferredAction.focus();
+} catch (e) { }
 </script>
 </body>
 </html>
