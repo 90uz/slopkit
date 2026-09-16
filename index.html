@@ -36,10 +36,11 @@
 
   <script src="compatibility.js"></script>
   <script>
+const STAGE5_BASE_QUERY = "go=1&auto=1&production=1&trigger=netcontrol&attempts=8&only=ps0_preflight,ps1_prepare,ps3_stage0,ps4_validate,ps5_stage1,ps6_stage2,ps8_stage3,ps9_stage4,ps10_stage5&log=debug&payload=1";
 const compat = window.SlopkitCompatibility;
 const ROUTE = {
-    stage5: "slopkit/poops.html?go=1&auto=1&production=1&trigger=netcontrol&attempts=8&only=ps0_preflight,ps1_prepare,ps3_stage0,ps4_validate,ps5_stage1,ps6_stage2,ps8_stage3,ps9_stage4,ps10_stage5&log=debug&payload=1&v=final",
-    stage5Reuse: "slopkit/poops.html?go=1&auto=1&production=1&trigger=netcontrol&attempts=8&only=ps0_preflight,ps1_prepare,ps3_stage0,ps4_validate,ps5_stage1,ps6_stage2,ps8_stage3,ps9_stage4,ps10_stage5&log=debug&payload=1&reuse=1&v=final",
+    stage5: `slopkit/poops.html?${STAGE5_BASE_QUERY}&v=final`,
+    stage5Reuse: `slopkit/poops.html?${STAGE5_BASE_QUERY}&reuse=1&v=final`,
     notifyLauncher: "notify-launcher.html"
 };
 
@@ -67,6 +68,9 @@ function bindCanonicalRoute(link, expectedRoute, shouldBlock) {
     const handleActivation = function (event) {
         if (event.type === "keydown" && event.key !== "Enter" && event.key !== " ") {
             return;
+        }
+        if (event.type === "keydown" && event.key === " ") {
+            event.preventDefault();
         }
         if (typeof shouldBlock === "function" && shouldBlock()) {
             event.preventDefault();
