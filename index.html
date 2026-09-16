@@ -59,7 +59,7 @@ function disableAction(link, label, title) {
     link.removeAttribute("href");
     link.setAttribute("aria-disabled", "true");
     link.setAttribute("aria-describedby", "fw-compat-note");
-    link.setAttribute("tabindex", "0");
+    link.setAttribute("tabindex", "-1");
 }
 
 function bindCanonicalRoute(link, expectedRoute, shouldBlock) {
