@@ -73,6 +73,10 @@ function bindCanonicalRoute(link, expectedRoute, shouldBlock) {
             return;
         }
         const currentHref = link.getAttribute("href") || "";
+        if (!currentHref) {
+            event.preventDefault();
+            return;
+        }
         if (!isCanonicalRoute(currentHref, expectedRoute)) {
             event.preventDefault();
             throw new Error(`Blocked non-canonical route for ${link.id || "action"}.`);
