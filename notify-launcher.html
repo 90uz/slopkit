@@ -26,7 +26,7 @@ button:disabled{opacity:0.4;cursor:default}
 Code pages can only be <i>called</i>, not read — stub addresses are verified
 with <b>Call stub</b>.</p>
 <p class="done">13.40 status: 331-entry syscall table verified live (5/5 calls + GOT agreement). Userland 9/9 confirmed on hardware.</p>
-<p class="note">Still needed: 21 WebKit ROP gadget offsets for 13.40. Proven unobtainable on-console (code is execute-only; a full 4MB sweep found only data bytes). Sources: static analysis of decrypted 13.40 libSceNKWebKit (see find_gadgets.py), the offsets.json origin, or the other project's table. Paste them in and the chain boots.</p>
+<p class="note">13.40+ remains validation-focused. Keep the notify flow limited to supported profiles, update compatibility messaging when profiles change, and verify results before treating a profile as ready.</p>
 <p>Firmware: <select id="fw"></select>
 <label>Memory: <select id="mem"><option value="512">normal (n=512)</option><option value="128" selected>low (n=128)</option><option value="64">ultra-low (n=64)</option><option value="emergency">emergency (n=32, full carrier)</option></select></label></p>
 <p><button id="go" disabled>Run notify proof</button>
