@@ -1,152 +1,198 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>PS5 Notify Launcher</title>
-<style>
-html,body{margin:0;min-height:100%;background:#0c0c0f;color:#ccc;font-family:Arial,sans-serif}
-body{display:flex;flex-direction:column;align-items:center;padding:24px 12px}
-#box{max-width:560px;width:100%;background:#141419;border:1px solid #2a2a2e;border-radius:10px;padding:18px}
-h1{font-size:22px;color:#fff;margin:0 0 8px}
-p{font-size:14px;line-height:1.5}
-select,button{font-size:16px;padding:8px 12px;margin:6px 4px 6px 0;border-radius:6px}
-button{background:#223146;color:#cfe3ff;border:2px solid #5e81ac;cursor:pointer}
-button:disabled{opacity:0.4;cursor:default}
-#status{font-family:Consolas,monospace;font-size:13px;color:#8fa1b3;white-space:pre-wrap}
-.note{font-size:13px;color:#e74856}
-.done{font-size:13px;color:#16c60c}
-</style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PS5 SlopKit Launchers</title>
+  <link rel="stylesheet" href="main.css?v=final">
 </head>
 <body>
-<div id="box">
-<h1>PS5 Notify Launcher</h1>
-<p>Detects firmware from User-Agent, loads <code>offsets.json</code> (09.00&ndash;13.60).
-Code pages can only be <i>called</i>, not read — stub addresses are verified
-with <b>Call stub</b>.</p>
-<p class="done">13.40 status: 331-entry syscall table verified live (5/5 calls + GOT agreement). Userland 9/9 confirmed on hardware.</p>
-<p class="note">Still needed: 21 WebKit ROP gadget offsets for 13.40. Proven unobtainable on-console (code is execute-only; a full 4MB sweep found only data bytes). Sources: static analysis of decrypted 13.40 libSceNKWebKit (see find_gadgets.py), the offsets.json origin, or the other project's table. Paste them in and the chain boots.</p>
-<p>Firmware: <select id="fw"></select>
-<label>Memory: <select id="mem"><option value="512">normal (n=512)</option><option value="128" selected>low (n=128)</option><option value="64">ultra-low (n=64)</option><option value="emergency">emergency (n=32, full carrier)</option></select></label></p>
-<p><button id="go" disabled>Run notify proof</button>
-<button id="call" disabled>Call stub (?call=)</button>
-<button id="wmap" disabled>Map readability (?wmap=1)</button></p>
-<p><label>Call stub rva <input id="callrva" size="8" placeholder="1B860"></label></p>
-<p><label>Sweep gadgets from <input id="wsweep" size="8" placeholder="2B00000"></label>
-<button id="sweep" disabled>Sweep gadgets</button></p>
-<div id="status">loading offsets.json&hellip;</div>
-</div>
-<script>
-"use strict";
-const statusEl = document.getElementById("status");
-const fwEl = document.getElementById("fw");
-const goEl = document.getElementById("go");
-const callEl = document.getElementById("call");
-const callrvaEl = document.getElementById("callrva");
-const wmapEl = document.getElementById("wmap");
-const sweepEl = document.getElementById("sweep");
-const wsweepEl = document.getElementById("wsweep");
-const memEl = document.getElementById("mem");
-let DATA = null;
+  <div class="p-2">
+    <h1 class="text-center">PS5 SlopKit Launchers</h1>
+    <p class="text-center" id="top-bar-text">
+      Current Firmware: <span class="fw-bold" id="current-fw">Unknown</span>
+      <span class="firmware-stage-note" id="fw-stage-note" hidden></span>
+    </p>
+  </div>
 
-function normFw(s) {
-  const m = /^(\d+)\.(\d+)$/.exec(String(s).trim());
-  if (!m) return String(s).trim();
-  return m[1].padStart(2, "0") + "." + m[2];
-}
-function detectFw() {
-  const m = /PlayStation 5\/(\d+\.\d+)/.exec(navigator.userAgent);
-  return m ? normFw(m[1]) : null;
-}
-function setStatus(t) { statusEl.textContent = t; }
+  <div id="main-content">
+    <div id="pre-jb-view" class="selected">
+      <a tabindex="0" class="btn fw-bold" id="run-jb"
+         href="slopkit/poops.html?go=1&amp;auto=1&amp;production=1&amp;trigger=netcontrol&amp;attempts=8&amp;only=ps0_preflight,ps1_prepare,ps3_stage0,ps4_validate,ps5_stage1,ps6_stage2,ps8_stage3,ps9_stage4,ps10_stage5&amp;log=debug&amp;payload=1&amp;v=final">Jailbreak</a>
+      <a tabindex="0" class="btn btn-secondary" id="run-sender"
+         href="slopkit/poops.html?go=1&amp;auto=1&amp;production=1&amp;trigger=netcontrol&amp;attempts=8&amp;only=ps0_preflight,ps1_prepare,ps3_stage0,ps4_validate,ps5_stage1,ps6_stage2,ps8_stage3,ps9_stage4,ps10_stage5&amp;log=debug&amp;payload=1&amp;reuse=1&amp;v=final">Payloads (sender)</a>
+      <a tabindex="0" class="btn btn-secondary" id="run-notify"
+         href="notify-launcher.html">Notify launcher</a>
+      <p class="text-secondary" id="fw-compat-note" hidden aria-live="polite"></p>
+      <p class="text-secondary" id="fw-prereq-note" hidden aria-live="polite"></p>
+      <p class="text-secondary" id="fw-support-matrix">
+        Firmware support: 9.00-13.00 = jailbreak + ELF loader + sender | 9.00-13.60 = notify launcher | others = unsupported.
+      </p>
+    </div>
+  </div>
 
-async function load() {
-  try {
-    const r = await fetch("offsets.json?v=" + Date.now(), { cache: "no-store" });
-    if (!r.ok) throw new Error("HTTP " + r.status);
-    DATA = await r.json();
-  } catch (e) {
-    setStatus("offsets.json load failed: " + (e.message || e));
-    return;
-  }
-  const keys = Object.keys(DATA).sort();
-  fwEl.innerHTML = "";
-  for (const k of keys) {
-    const o = document.createElement("option");
-    o.value = k; o.textContent = k;
-    fwEl.appendChild(o);
-  }
-  const det = detectFw();
-  if (det && DATA[det]) {
-    fwEl.value = det;
-    setStatus("detected FW " + det + " (" + navigator.userAgent + ")\n" + keys.length + " profiles loaded.");
-  } else {
-    setStatus("UA firmware not detected (" + navigator.userAgent + ").\nPick manually. Loaded: " + keys.join(", "));
-  }
-  goEl.disabled = false;
-  callEl.disabled = false;
-  wmapEl.disabled = false;
-  sweepEl.disabled = false;
+  <div class="position-relative text-center p-2 mb-2">
+    <p class="text-secondary">Credits</p>
+    <p class="text-secondary mt-2">Jordy, Egy, Sonic, Yenyen, Zeco, Gezine, Echostretch, Ufm42, TheFloW, John Tornblom, Flatz, Idlesauce and PS5 R&amp;D Discord.</p>
+  </div>
+
+  <script>
+const ROUTE = {
+    stage5: "slopkit/poops.html?go=1&auto=1&production=1&trigger=netcontrol&attempts=8&only=ps0_preflight,ps1_prepare,ps3_stage0,ps4_validate,ps5_stage1,ps6_stage2,ps8_stage3,ps9_stage4,ps10_stage5&log=debug&payload=1&v=final",
+    stage5Reuse: "slopkit/poops.html?go=1&auto=1&production=1&trigger=netcontrol&attempts=8&only=ps0_preflight,ps1_prepare,ps3_stage0,ps4_validate,ps5_stage1,ps6_stage2,ps8_stage3,ps9_stage4,ps10_stage5&log=debug&payload=1&reuse=1&v=final",
+    notifyLauncher: "notify-launcher.html"
+};
+
+function normalizeRoute(route) {
+    const url = new URL(route, window.location.href);
+    return `${url.pathname}${url.search}`;
 }
 
-function buildQuery(scan) {
-  const fw = fwEl.value;
-  const e = DATA && DATA[fw];
-  if (!e) { setStatus("no entry for " + fw); return null; }
-  const q = new URLSearchParams();
-  q.set("go", "1");
-  q.set("auto", "1");
-  q.set("fw", fw);
-  q.set("_", String(Date.now())); // cache-buster: PS5 caches by URL, stale hits haunted us before
-  q.set("hc", (e.hc || []).join(","));
-  q.set("notify", e.nt);
-  q.set("gd", e.gd);
-  q.set("gps", e.gps);
-  q.set("gpe", e.gpe);
-  q.set("cls", e.cls);
-  q.set("cle", e.cle);
-  q.set("ers", e.ers);
-  q.set("ere", e.ere);
-  if (scan) { q.set("scan", "1"); q.set("lines", "400"); }
-  if (memEl) {
-    if (memEl.value === "emergency") { q.set("n", "32"); }
-    else if (memEl.value !== "512") { q.set("n", memEl.value); }
-  }
-  return q;
+function isCanonicalRoute(route, expected) {
+    return normalizeRoute(route) === normalizeRoute(expected);
 }
 
-goEl.addEventListener("click", () => {
-  const q = buildQuery(false);
-  if (q) location.href = "notify.html?" + q.toString();
-});
+function setActionState(link, config) {
+    if (!link) return;
+    link.textContent = config.label;
+    link.title = config.title || "";
+    if (config.disabled) {
+        link.removeAttribute("href");
+        link.setAttribute("aria-disabled", "true");
+        link.setAttribute("aria-describedby", "fw-compat-note");
+        link.setAttribute("tabindex", "-1");
+        return;
+    }
+    link.href = config.href;
+    link.removeAttribute("aria-disabled");
+    link.removeAttribute("aria-describedby");
+    link.setAttribute("tabindex", "0");
+}
 
-callEl.addEventListener("click", () => {
-  const q = buildQuery(false);
-  if (!q) return;
-  const r = (callrvaEl.value || "1B860").trim().replace(/^0x/i, "");
-  q.set("call", r);
-  q.set("lines", "400");
-  location.href = "notify.html?" + q.toString();
-});
+function firmwareStateFromVersion(firmware) {
+    const parsed = Number.parseFloat(firmware);
+    if (!Number.isFinite(parsed)) return "unknown";
+    if (parsed < 9.0 || parsed > 13.6) return "unsupported";
+    return parsed <= 13.0 ? "full" : "notify";
+}
 
-wmapEl.addEventListener("click", () => {
-  const q = buildQuery(true);
-  if (!q) return;
-  q.set("wmap", "1");
-  location.href = "notify.html?" + q.toString();
-});
+function runCompatibilitySelfChecks() {
+    const stateChecks = [
+        ["9.00", "full"],
+        ["12.00", "full"],
+        ["13.00", "full"],
+        ["13.40", "notify"],
+        ["8.99", "unsupported"],
+        ["", "unknown"]
+    ];
+    for (const [firmware, expected] of stateChecks) {
+        if (firmwareStateFromVersion(firmware) !== expected) {
+            throw new Error(`Firmware state self-check failed for ${firmware || "empty"}`);
+        }
+    }
+    if (!isCanonicalRoute(ROUTE.stage5Reuse, ROUTE.stage5Reuse)
+        || !isCanonicalRoute(ROUTE.stage5, ROUTE.stage5)
+        || !isCanonicalRoute(ROUTE.notifyLauncher, ROUTE.notifyLauncher)) {
+        throw new Error("Route canonical self-check failed");
+    }
+}
 
-sweepEl.addEventListener("click", () => {
-  const q = buildQuery(true);
-  if (!q) return;
-  q.set("notaska", "1");
-  q.set("scanmb", "8");
-  const s = (wsweepEl.value || "2B00000").trim().replace(/^0x/i, "");
-  q.set("wstart", "0x" + s);
-  location.href = "notify.html?" + q.toString();
-});
+try {
+    runCompatibilitySelfChecks();
+    var firmwareMatch = /PlayStation 5\/(\d+\.\d+)/.exec(navigator.userAgent);
+    var firmware = firmwareMatch ? firmwareMatch[1] : "";
+    var runJb = document.getElementById("run-jb");
+    var runSender = document.getElementById("run-sender");
+    var runNotify = document.getElementById("run-notify");
+    var firmwareNote = document.getElementById("fw-compat-note");
+    var firmwareStageNote = document.getElementById("fw-stage-note");
+    var prereqNote = document.getElementById("fw-prereq-note");
+    var firmwareState = firmwareStateFromVersion(firmware);
 
-load();
+    document.getElementById("current-fw").textContent = firmware || "Not detected";
+
+    if (firmwareNote) {
+        firmwareNote.hidden = true;
+        firmwareNote.textContent = "";
+    }
+    if (firmwareStageNote) {
+        firmwareStageNote.hidden = true;
+        firmwareStageNote.textContent = "";
+    }
+    if (prereqNote) {
+        prereqNote.hidden = false;
+        prereqNote.textContent = "Prerequisites: stable internet, keep browser open during execution, reboot and retry after failures.";
+    }
+
+    setActionState(runNotify, { href: ROUTE.notifyLauncher, label: "Notify launcher" });
+
+    if (firmwareState === "full") {
+        setActionState(runJb, { href: ROUTE.stage5, label: "Jailbreak" });
+        setActionState(runSender, { href: ROUTE.stage5Reuse, label: "Payloads (sender)" });
+    } else {
+        setActionState(runJb, {
+            disabled: true,
+            label: "Jailbreak unavailable",
+            title: "This firmware is outside the supported jailbreak range (9.00-13.00)."
+        });
+        setActionState(runSender, {
+            disabled: true,
+            label: "Payloads unavailable",
+            title: "This firmware is outside the supported jailbreak range (9.00-13.00)."
+        });
+        if (firmwareNote) {
+            firmwareNote.hidden = false;
+            firmwareNote.textContent = firmwareState === "notify"
+                ? "This firmware is supported by the notify launcher only. Use the Notify launcher button."
+                : firmwareState === "unknown"
+                    ? "Firmware not detected. Manual confirmation required: jailbreak supports 9.00-13.00 and notify supports 9.00-13.60."
+                    : "Unsupported firmware detected. Supported ranges: jailbreak 9.00-13.00, notify 9.00-13.60.";
+        }
+    }
+
+    if (runJb) {
+        runJb.addEventListener("click", function (event) {
+            if (runJb.getAttribute("aria-disabled") === "true") {
+                event.preventDefault();
+                return;
+            }
+            const currentHref = runJb.getAttribute("href") || "";
+            if (!isCanonicalRoute(currentHref, ROUTE.stage5)) {
+                event.preventDefault();
+                throw new Error("Blocked non-canonical jailbreak route.");
+            }
+            runJb.href = ROUTE.stage5;
+        });
+    }
+    if (runSender) {
+        runSender.addEventListener("click", function (event) {
+            if (runSender.getAttribute("aria-disabled") === "true") {
+                event.preventDefault();
+                return;
+            }
+            const currentHref = runSender.getAttribute("href") || "";
+            if (firmwareState !== "full" || !isCanonicalRoute(currentHref, ROUTE.stage5Reuse)) {
+                event.preventDefault();
+                throw new Error("Blocked non-canonical sender route.");
+            }
+            runSender.href = ROUTE.stage5Reuse;
+        });
+    }
+    if (runNotify) {
+        runNotify.addEventListener("click", function (event) {
+            const currentHref = runNotify.getAttribute("href") || "";
+            if (!isCanonicalRoute(currentHref, ROUTE.notifyLauncher)) {
+                event.preventDefault();
+                throw new Error("Blocked non-canonical notify route.");
+            }
+            runNotify.href = ROUTE.notifyLauncher;
+        });
+    }
+} catch (e) {
+    console.error("Firmware compatibility error:", e);
+}
+
+try { document.getElementById("run-jb").focus(); } catch (e) { }
 </script>
 </body>
 </html>
