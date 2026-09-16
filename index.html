@@ -52,6 +52,16 @@ function isCanonicalRoute(route, expected) {
     return normalizeRoute(route) === normalizeRoute(expected);
 }
 
+function disableAction(link, label, title) {
+    if (!link) return;
+    link.textContent = label;
+    link.title = title || "";
+    link.removeAttribute("href");
+    link.setAttribute("aria-disabled", "true");
+    link.setAttribute("aria-describedby", "fw-compat-note");
+    link.setAttribute("tabindex", "-1");
+}
+
 function bindCanonicalRoute(link, expectedRoute, shouldBlock) {
     if (!link) return;
     const handleActivation = function (event) {
@@ -78,10 +88,7 @@ function setActionState(link, config) {
     link.textContent = config.label;
     link.title = config.title || "";
     if (config.disabled) {
-        link.removeAttribute("href");
-        link.setAttribute("aria-disabled", "true");
-        link.setAttribute("aria-describedby", "fw-compat-note");
-        link.setAttribute("tabindex", "0");
+        disableAction(link, config.label, config.title);
         return;
     }
     link.href = config.href;
@@ -180,21 +187,9 @@ try {
     bindCanonicalRoute(runNotify, ROUTE.notifyLauncher);
 } catch (e) {
     console.error("Firmware compatibility error:", e);
-    setActionState(document.getElementById("run-jb"), {
-        disabled: true,
-        label: "Jailbreak unavailable",
-        title: "Compatibility checks failed."
-    });
-    setActionState(document.getElementById("run-sender"), {
-        disabled: true,
-        label: "Payloads unavailable",
-        title: "Compatibility checks failed."
-    });
-    setActionState(document.getElementById("run-notify"), {
-        disabled: true,
-        label: "Notify launcher unavailable",
-        title: "Compatibility checks failed."
-    });
+    disableAction(document.getElementById("run-jb"), "Jailbreak unavailable", "Compatibility checks failed.");
+    disableAction(document.getElementById("run-sender"), "Payloads unavailable", "Compatibility checks failed.");
+    disableAction(document.getElementById("run-notify"), "Notify launcher unavailable", "Compatibility checks failed.");
     var failNote = document.getElementById("fw-compat-note");
     if (failNote) {
         failNote.hidden = false;
