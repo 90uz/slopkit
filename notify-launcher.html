@@ -23,8 +23,8 @@ button:disabled{opacity:0.4;cursor:default}
 <p><a class="linkbtn" href="index.html">Back</a></p>
 <h1>PS5 Notify Launcher</h1>
 <p>Detects firmware from User-Agent and loads supported profiles from <code>offsets.json</code> (09.00&ndash;13.60).</p>
-<p class="done">Notify profiles are listed through 13.60 for compatibility and validation flows.</p>
-<p class="note">Confirmed readiness is narrower: 13.40+ remains validation-focused and should be treated as compatibility testing until it is verified.</p>
+<p class="done" id="notify-availability"></p>
+<p class="note" id="notify-readiness"></p>
 <p>Firmware: <select id="fw"></select>
 <label>Memory: <select id="mem"><option value="512">normal (n=512)</option><option value="128" selected>low (n=128)</option><option value="64">ultra-low (n=64)</option><option value="emergency">emergency (n=32, full carrier)</option></select></label></p>
 <p><button id="go" disabled>Run notify proof</button>
@@ -35,8 +35,10 @@ button:disabled{opacity:0.4;cursor:default}
 <button id="sweep" disabled>Sweep gadgets</button></p>
 <div id="status">loading offsets.json&hellip;</div>
 </div>
+<script src="compatibility.js"></script>
 <script>
 "use strict";
+const compat = window.SlopkitCompatibility;
 const statusEl = document.getElementById("status");
 const fwEl = document.getElementById("fw");
 const goEl = document.getElementById("go");
@@ -46,6 +48,8 @@ const wmapEl = document.getElementById("wmap");
 const sweepEl = document.getElementById("sweep");
 const wsweepEl = document.getElementById("wsweep");
 const memEl = document.getElementById("mem");
+const notifyAvailabilityEl = document.getElementById("notify-availability");
+const notifyReadinessEl = document.getElementById("notify-readiness");
 const OFFSETS_VERSION = "20260916";
 let DATA = null;
 
@@ -59,6 +63,13 @@ function detectFw() {
   return m ? normFw(m[1]) : null;
 }
 function setStatus(t) { statusEl.textContent = t; }
+
+if (notifyAvailabilityEl) {
+  notifyAvailabilityEl.textContent = compat.texts.notifyAvailability;
+}
+if (notifyReadinessEl) {
+  notifyReadinessEl.textContent = compat.texts.notifyReadiness;
+}
 
 async function load() {
   try {

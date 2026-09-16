@@ -25,9 +25,7 @@
          href="notify-launcher.html">Notify launcher</a>
       <p class="text-secondary" id="fw-compat-note" hidden aria-live="polite"></p>
       <p class="text-secondary" id="fw-prereq-note" hidden aria-live="polite"></p>
-      <p class="text-secondary" id="fw-support-matrix">
-        Firmware support: 9.00-13.00 = jailbreak + ELF loader + sender | 9.00-13.60 = notify launcher | others = unsupported.
-      </p>
+      <p class="text-secondary" id="fw-support-matrix"></p>
     </div>
   </div>
 
@@ -36,7 +34,9 @@
     <p class="text-secondary mt-2">Jordy, Egy, Sonic, Yenyen, Zeco, Gezine, Echostretch, Ufm42, TheFloW, John Tornblom, Flatz, Idlesauce and PS5 R&amp;D Discord.</p>
   </div>
 
+  <script src="compatibility.js"></script>
   <script>
+const compat = window.SlopkitCompatibility;
 const ROUTE = {
     stage5: "slopkit/poops.html?go=1&auto=1&production=1&trigger=netcontrol&attempts=8&only=ps0_preflight,ps1_prepare,ps3_stage0,ps4_validate,ps5_stage1,ps6_stage2,ps8_stage3,ps9_stage4,ps10_stage5&log=debug&payload=1&v=final",
     stage5Reuse: "slopkit/poops.html?go=1&auto=1&production=1&trigger=netcontrol&attempts=8&only=ps0_preflight,ps1_prepare,ps3_stage0,ps4_validate,ps5_stage1,ps6_stage2,ps8_stage3,ps9_stage4,ps10_stage5&log=debug&payload=1&reuse=1&v=final",
@@ -102,24 +102,18 @@ function setActionState(link, config) {
     link.setAttribute("tabindex", "0");
 }
 
-function firmwareStateFromVersion(firmware) {
-    const parsed = Number.parseFloat(firmware);
-    if (!Number.isFinite(parsed)) return "unknown";
-    if (parsed < 9.0 || parsed > 13.6) return "unsupported";
-    return parsed <= 13.0 ? "full" : "notify";
-}
-
 function runCompatibilitySelfChecks() {
     const stateChecks = [
         ["9.00", "full"],
         ["12.00", "full"],
         ["13.00", "full"],
+        ["13.10", "unsupported"],
         ["13.40", "notify"],
         ["8.99", "unsupported"],
         ["", "unknown"]
     ];
     for (const [firmware, expected] of stateChecks) {
-        if (firmwareStateFromVersion(firmware) !== expected) {
+        if (compat.firmwareStateFromVersion(firmware) !== expected) {
             throw new Error(`Firmware state self-check failed for ${firmware || "empty"}`);
         }
     }
@@ -140,9 +134,13 @@ try {
     var firmwareNote = document.getElementById("fw-compat-note");
     var firmwareStageNote = document.getElementById("fw-stage-note");
     var prereqNote = document.getElementById("fw-prereq-note");
-    var firmwareState = firmwareStateFromVersion(firmware);
+    var supportMatrix = document.getElementById("fw-support-matrix");
+    var firmwareState = compat.firmwareStateFromVersion(firmware);
 
     document.getElementById("current-fw").textContent = firmware || "Not detected";
+    if (supportMatrix) {
+        supportMatrix.textContent = compat.texts.supportMatrix;
+    }
 
     if (firmwareNote) {
         firmwareNote.hidden = true;
@@ -201,11 +199,6 @@ try {
         failNote.textContent = "Compatibility checks failed. Refresh the page before launching any flow.";
     }
 }
-
-try {
-    const preferredAction = document.querySelector("#pre-jb-view a[href]");
-    if (preferredAction) preferredAction.focus();
-} catch (e) { }
 </script>
 </body>
 </html>
