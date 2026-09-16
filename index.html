@@ -52,6 +52,22 @@ function isCanonicalRoute(route, expected) {
     return normalizeRoute(route) === normalizeRoute(expected);
 }
 
+function bindCanonicalRoute(link, expectedRoute, shouldBlock) {
+    if (!link) return;
+    link.addEventListener("click", function (event) {
+        if (typeof shouldBlock === "function" && shouldBlock()) {
+            event.preventDefault();
+            return;
+        }
+        const currentHref = link.getAttribute("href") || "";
+        if (!isCanonicalRoute(currentHref, expectedRoute)) {
+            event.preventDefault();
+            throw new Error(`Blocked non-canonical route for ${link.id || "action"}.`);
+        }
+        link.href = expectedRoute;
+    });
+}
+
 function setActionState(link, config) {
     if (!link) return;
     link.textContent = config.label;
@@ -60,7 +76,7 @@ function setActionState(link, config) {
         link.removeAttribute("href");
         link.setAttribute("aria-disabled", "true");
         link.setAttribute("aria-describedby", "fw-compat-note");
-        link.setAttribute("tabindex", "-1");
+        link.setAttribute("tabindex", "0");
         return;
     }
     link.href = config.href;
@@ -150,44 +166,13 @@ try {
         }
     }
 
-    if (runJb) {
-        runJb.addEventListener("click", function (event) {
-            if (runJb.getAttribute("aria-disabled") === "true") {
-                event.preventDefault();
-                return;
-            }
-            const currentHref = runJb.getAttribute("href") || "";
-            if (!isCanonicalRoute(currentHref, ROUTE.stage5)) {
-                event.preventDefault();
-                throw new Error("Blocked non-canonical jailbreak route.");
-            }
-            runJb.href = ROUTE.stage5;
-        });
-    }
-    if (runSender) {
-        runSender.addEventListener("click", function (event) {
-            if (runSender.getAttribute("aria-disabled") === "true") {
-                event.preventDefault();
-                return;
-            }
-            const currentHref = runSender.getAttribute("href") || "";
-            if (firmwareState !== "full" || !isCanonicalRoute(currentHref, ROUTE.stage5Reuse)) {
-                event.preventDefault();
-                throw new Error("Blocked non-canonical sender route.");
-            }
-            runSender.href = ROUTE.stage5Reuse;
-        });
-    }
-    if (runNotify) {
-        runNotify.addEventListener("click", function (event) {
-            const currentHref = runNotify.getAttribute("href") || "";
-            if (!isCanonicalRoute(currentHref, ROUTE.notifyLauncher)) {
-                event.preventDefault();
-                throw new Error("Blocked non-canonical notify route.");
-            }
-            runNotify.href = ROUTE.notifyLauncher;
-        });
-    }
+    bindCanonicalRoute(runJb, ROUTE.stage5, function () {
+        return runJb.getAttribute("aria-disabled") === "true";
+    });
+    bindCanonicalRoute(runSender, ROUTE.stage5Reuse, function () {
+        return runSender.getAttribute("aria-disabled") === "true" || firmwareState !== "full";
+    });
+    bindCanonicalRoute(runNotify, ROUTE.notifyLauncher);
 } catch (e) {
     console.error("Firmware compatibility error:", e);
 }
