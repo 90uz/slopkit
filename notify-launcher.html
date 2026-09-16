@@ -48,6 +48,7 @@ const wmapEl = document.getElementById("wmap");
 const sweepEl = document.getElementById("sweep");
 const wsweepEl = document.getElementById("wsweep");
 const memEl = document.getElementById("mem");
+const OFFSETS_VERSION = "20260916";
 let DATA = null;
 
 function normFw(s) {
@@ -63,7 +64,7 @@ function setStatus(t) { statusEl.textContent = t; }
 
 async function load() {
   try {
-    const r = await fetch("offsets.json", { cache: "no-store" });
+    const r = await fetch("offsets.json?v=" + OFFSETS_VERSION, { cache: "no-store" });
     if (!r.ok) throw new Error("HTTP " + r.status);
     DATA = await r.json();
   } catch (e) {

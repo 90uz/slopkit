@@ -54,7 +54,10 @@ function isCanonicalRoute(route, expected) {
 
 function bindCanonicalRoute(link, expectedRoute, shouldBlock) {
     if (!link) return;
-    link.addEventListener("click", function (event) {
+    const handleActivation = function (event) {
+        if (event.type === "keydown" && event.key !== "Enter" && event.key !== " ") {
+            return;
+        }
         if (typeof shouldBlock === "function" && shouldBlock()) {
             event.preventDefault();
             return;
@@ -65,7 +68,9 @@ function bindCanonicalRoute(link, expectedRoute, shouldBlock) {
             throw new Error(`Blocked non-canonical route for ${link.id || "action"}.`);
         }
         link.href = expectedRoute;
-    });
+    };
+    link.addEventListener("click", handleActivation);
+    link.addEventListener("keydown", handleActivation);
 }
 
 function setActionState(link, config) {
@@ -175,6 +180,26 @@ try {
     bindCanonicalRoute(runNotify, ROUTE.notifyLauncher);
 } catch (e) {
     console.error("Firmware compatibility error:", e);
+    setActionState(document.getElementById("run-jb"), {
+        disabled: true,
+        label: "Jailbreak unavailable",
+        title: "Compatibility checks failed."
+    });
+    setActionState(document.getElementById("run-sender"), {
+        disabled: true,
+        label: "Payloads unavailable",
+        title: "Compatibility checks failed."
+    });
+    setActionState(document.getElementById("run-notify"), {
+        disabled: true,
+        label: "Notify launcher unavailable",
+        title: "Compatibility checks failed."
+    });
+    var failNote = document.getElementById("fw-compat-note");
+    if (failNote) {
+        failNote.hidden = false;
+        failNote.textContent = "Compatibility checks failed. Refresh the page before launching any flow.";
+    }
 }
 
 try { document.getElementById("run-jb").focus(); } catch (e) { }
