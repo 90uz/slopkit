@@ -166,8 +166,8 @@ try {
         setActionState(runSender, { href: ROUTE.stage5Reuse, label: "Payloads (sender)" });
     } else {
         setActionState(runJb, {
-            disabled: true,
-            label: "Jailbreak unavailable",
+            disabled: false,
+            label: "Jailbreak unavailable ( Enabled for Testing )",
             title: "This firmware is outside the supported jailbreak range (9.00-13.00)."
         });
         setActionState(runSender, {
